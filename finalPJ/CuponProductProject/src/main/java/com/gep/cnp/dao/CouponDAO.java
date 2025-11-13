@@ -11,10 +11,10 @@ import com.jep.cnp.util.ConnectionUtil;
 public class CouponDAO {
 	
 	public void save(Coupon coupon) {
-		Connection connection = ConnectionUtil.getConnection();
-		try {
-			PreparedStatement statement = connection.prepareStatement("insert into coupon (code,discount,exp_date) values(?,?,?)");
-			statement.setString(1,coupon.getCode());
+		String sql = "insert into coupon (code,discount,exp_date) values(?,?,?)";
+		try (Connection connection = ConnectionUtil.getConnection();
+		     PreparedStatement statement = connection.prepareStatement(sql)) {
+			statement.setString(1, coupon.getCode());
 			statement.setBigDecimal(2, coupon.getDiscount());
 			statement.setString(3, coupon.getExpDate());
 			statement.executeUpdate();
@@ -23,23 +23,27 @@ public class CouponDAO {
 		}
 	}
 	
-	public Coupon findBCode(String code) {
-		Coupon coupon = new Coupon();
-		Connection connection = ConnectionUtil.getConnection();
-		try {
-			PreparedStatement statement = connection.prepareStatement("select * from coupon where code=?");
+	// 修正方法名为 findByCode，返回 null 当未找到
+	public Coupon findByCode(String code) {
+		String sql = "select id, code, discount, exp_date from coupon where code=?";
+		try (Connection connection = ConnectionUtil.getConnection();
+		     PreparedStatement statement = connection.prepareStatement(sql)) {
 			statement.setString(1, code);
-			ResultSet resultSet = statement.executeQuery();
-			
-			while (resultSet.next()) {
-				coupon.setId(resultSet.getInt(1));
-				coupon.setCode(resultSet.getString(2));
-				coupon.setDiscount(resultSet.getBigDecimal(3));
-				coupon.setExpDate(resultSet.getString(4));
+			try (ResultSet resultSet = statement.executeQuery()) {
+				if (resultSet.next()) {
+					Coupon coupon = new Coupon();
+					coupon.setId(resultSet.getInt("id"));
+					coupon.setCode(resultSet.getString("code"));
+					coupon.setDiscount(resultSet.getBigDecimal("discount"));
+					coupon.setExpDate(resultSet.getString("exp_date"));
+					return coupon;
+				} else {
+					return null;
+				}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		return coupon;
+		return null;
 	}
 }

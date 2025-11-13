@@ -8,16 +8,18 @@ import com.gep.cnp.model.Product;
 import com.jep.cnp.util.ConnectionUtil;
 
 public class ProductDAO {
-	public void sava(Product product) {
-	Connection connection = ConnectionUtil.getConnection();
-	try {
-		PreparedStatement statement = connection.prepareStatement("insert into coupon (code,discount,exp_date) values(?,?,?)");
-		statement.setString(1,product.getName());
-		statement.setString(2, product.getDescription());
-		statement.setBigDecimal(3, product.getPrice());
-		statement.executeUpdate();
-	} catch (SQLException e) {
-		e.printStackTrace();
+	// 修正方法名为 save，修正 SQL 与参数
+	public void save(Product product) {
+		String sql = "insert into product (name, description, price, coupon_code) values (?, ?, ?, ?)";
+		try (Connection connection = ConnectionUtil.getConnection();
+		     PreparedStatement statement = connection.prepareStatement(sql)) {
+			statement.setString(1, product.getName());
+			statement.setString(2, product.getDescription());
+			statement.setBigDecimal(3, product.getPrice());
+			statement.setString(4, product.getCouponCode());
+			statement.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
-}
 }
